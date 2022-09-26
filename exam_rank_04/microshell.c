@@ -1,58 +1,42 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   microshell.c                                       :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: mjallada <mjallada@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2022/09/26 18:02:19 by mjallada          #+#    #+#             */
-/*   Updated: 2022/09/26 18:02:22 by mjallada         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
-#include <sys/types.h>
-#include <sys/wait.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 int	ft_strlen(char *str)
 {
-	int	i;
+	int i = 0;
 
-	i = 0;
-	while (str[i])
+	while(str[i])
 		i++;
 	return (i);
 }
 
-void	error_print(char *error, char *extra)
+void	error_printer(char *error, char *argument)
 {
 	write(2, error, ft_strlen(error));
-	if (extra)
+	if (argument)
 	{
 		write(2, " ", 1);
-		write(2, extra, ft_strlen(extra));
+		write(2, argument, ft_strlen(argument));
 	}
 	write(2, "\n", 1);
 }
 
 void	ft_cd(char **args)
 {
-	if (args[1] == NULL || args[2] != NULL)
-	{
-		error_print("error: cd: bad arguments", NULL);
-		return ;
-	}
-	if (chdir(args[1]) == -1)
-		error_print("error: cannot change directory", args[1]);
+	if (!args[1] || args[2])
+		error_printer("error: cd: bad arguments", NULL);
+	else if (chdir(args[1]) == -1)
+		error_printer("error: cd: cannot change directory to", args[1]);
 }
 
 void	exec(char **args, int is_piped, int old_stdin, char **env)
 {
-	int	pid;
+	int	pid = 0;
 	int	fd[2];
-
+	
 	if (strcmp(args[0], "cd") == 0)
 	{
 		ft_cd(args);
@@ -60,15 +44,15 @@ void	exec(char **args, int is_piped, int old_stdin, char **env)
 	}
 	if (is_piped && pipe(fd) == -1)
 	{
-		write(2, "error: fatal\n", 13);
 		close(old_stdin);
+		error_printer("error: fatal", NULL);
 		exit(1);
 	}
 	pid = fork();
 	if (pid == -1)
 	{
-		write(2, "error: fatal\n", 13);
 		close(old_stdin);
+		error_printer("error: fatal", NULL);
 		exit(1);
 	}
 	if (pid == 0)
@@ -80,7 +64,7 @@ void	exec(char **args, int is_piped, int old_stdin, char **env)
 			close(fd[1]);
 		}
 		execve(args[0], args, env);
-		error_print("error: cannot execute", args[0]);
+		error_printer("error: could not execute", args[0]);
 		close(old_stdin);
 		exit(1);
 	}
@@ -100,13 +84,13 @@ void	exec(char **args, int is_piped, int old_stdin, char **env)
 
 int	main(int argc, char **argv, char **env)
 {
-	(void)argc;
+	int	old_stdin = dup(0);
+	int	is_piped = 0;
 	int	i = 1;
 	int	j = 1;
-	int	is_piped = 0;
-	int	old_stdin = dup(0);
 
-	while(argv[i])
+	(void)argc;
+	while (argv[i])
 	{
 		if (strcmp(argv[i], "|") == 0 || strcmp(argv[i], ";") == 0)
 		{
