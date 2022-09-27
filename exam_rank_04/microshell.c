@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   microshell_practice.c                              :+:      :+:    :+:   */
+/*   microshell.c                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: mjallada <mjallada@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/27 07:05:30 by mjallada          #+#    #+#             */
-/*   Updated: 2022/09/27 07:23:15 by mjallada         ###   ########.fr       */
+/*   Updated: 2022/09/27 09:43:33 by mjallada         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -88,19 +88,19 @@ void	exec(char **argv, int is_piped, int old_stdin, char **env)
 			close (fd[0]);
 		}
 		else
-			dup2(old_stdin, 1);
+			dup2(old_stdin, 0);
 		waitpid(pid, 0, 0);
 	}
 }
 
 int	main(int argc, char **argv, char **env)
 {
-	int	is_piped;
+	int	is_piped = 0;
 	int	old_stdin = dup(0);
 	int	i = 1;
 	int j = 1;
-	(void)argc;
 
+	(void)argc;
 	while(argv[i])
 	{
 		if (strcmp(argv[i], "|") == 0 || strcmp(argv[i], ";") == 0)
@@ -108,7 +108,8 @@ int	main(int argc, char **argv, char **env)
 			if (strcmp(argv[i], "|") == 0)
 				is_piped = 1;
 			argv[i] = NULL;
-			exec(argv + j, is_piped, old_stdin, env);
+			if (argv[j])
+				exec(argv + j, is_piped, old_stdin, env);
 			is_piped = 0;
 			j = i + 1;
 		}
