@@ -1,5 +1,17 @@
-#include <unistd.h>
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   microshell_practice.c                              :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: mjallada <mjallada@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2022/09/27 07:05:30 by mjallada          #+#    #+#             */
+/*   Updated: 2022/09/27 07:23:15 by mjallada         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -7,8 +19,7 @@
 int	ft_strlen(char *str)
 {
 	int i = 0;
-
-	while(str[i])
+	while (str[i])
 		i++;
 	return (i);
 }
@@ -32,27 +43,27 @@ void	ft_cd(char **args)
 		error_printer("error: cd: cannot change directory to", args[1]);
 }
 
-void	exec(char **args, int is_piped, int old_stdin, char **env)
+void	exec(char **argv, int is_piped, int old_stdin, char **env)
 {
-	int	pid = 0;
 	int	fd[2];
-	
-	if (strcmp(args[0], "cd") == 0)
+	int	pid;
+
+	if (strcmp(argv[0], "cd") == 0)
 	{
-		ft_cd(args);
+		ft_cd(argv);
 		return ;
 	}
 	if (is_piped && pipe(fd) == -1)
 	{
-		close(old_stdin);
 		error_printer("error: fatal", NULL);
+		close(old_stdin);
 		exit(1);
 	}
 	pid = fork();
 	if (pid == -1)
 	{
-		close(old_stdin);
 		error_printer("error: fatal", NULL);
+		close(old_stdin);
 		exit(1);
 	}
 	if (pid == 0)
@@ -63,8 +74,8 @@ void	exec(char **args, int is_piped, int old_stdin, char **env)
 			dup2(fd[1], 1);
 			close(fd[1]);
 		}
-		execve(args[0], args, env);
-		error_printer("error: could not execute", args[0]);
+		execve(argv[0], argv, env);
+		error_printer("error: cannot execute", argv[0]);
 		close(old_stdin);
 		exit(1);
 	}
@@ -74,7 +85,7 @@ void	exec(char **args, int is_piped, int old_stdin, char **env)
 		{
 			close(fd[1]);
 			dup2(fd[0], 0);
-			close(fd[0]);
+			close (fd[0]);
 		}
 		else
 			dup2(old_stdin, 1);
@@ -84,13 +95,13 @@ void	exec(char **args, int is_piped, int old_stdin, char **env)
 
 int	main(int argc, char **argv, char **env)
 {
+	int	is_piped;
 	int	old_stdin = dup(0);
-	int	is_piped = 0;
 	int	i = 1;
-	int	j = 1;
-
+	int j = 1;
 	(void)argc;
-	while (argv[i])
+
+	while(argv[i])
 	{
 		if (strcmp(argv[i], "|") == 0 || strcmp(argv[i], ";") == 0)
 		{
