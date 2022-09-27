@@ -1,2 +1,2 @@
 # 42exams
-My preparation for 42 exams.
+My preparation for 42 exams
